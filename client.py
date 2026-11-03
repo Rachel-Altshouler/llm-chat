@@ -3,13 +3,22 @@ import os
 import truststore
 from dotenv import load_dotenv
 from openai import OpenAI
+from openai._streaming import SSEDecoder
 
 truststore.inject_into_ssl()
 load_dotenv()
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-MODEL = "gpt-4.1-nano"
+class SkipEmptyEvents(SSEDecoder):
+    def decode(self, line):
+        sse = super().decode(line)
+        return sse if sse and sse.data else None
+
+
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+client._make_sse_decoder = SkipEmptyEvents
+
+MODEL = "gpt-4o-mini"
 INSTRUCTIONS = "You are a helpful assistant. Format your answers in Markdown."
 
 

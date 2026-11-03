@@ -10,7 +10,7 @@ load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 response = client.responses.create(
-    model="gpt-4.1-nano",
+    model="gpt-4o-mini",
     instructions="Format your answer in Markdown.",
     input="Say hello in Hebrew and list 3 tips for learning Python.",
 )
