@@ -1,19 +1,18 @@
 import json
 import traceback
+from typing import Literal
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.responses import FileResponse, StreamingResponse
-from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from client import ask_model
 
 app = FastAPI()
-app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
 class Message(BaseModel):
-    role: str
+    role: Literal["user", "assistant"]
     content: str
 
 
@@ -22,9 +21,7 @@ class ChatRequest(BaseModel):
 
 
 def trim_history(messages: list[dict], keep_last: int = 12) -> list[dict]:
-    """Keep only the last messages so long conversations don't grow the cost forever."""
     trimmed = messages[-keep_last:]
-    # Start the trimmed history with a user message
     if trimmed and trimmed[0]["role"] == "assistant":
         trimmed = trimmed[1:]
     return trimmed
@@ -46,28 +43,17 @@ def health():
 
 @app.post("/ask")
 def ask(req: ChatRequest):
-    if not req.messages:
-        raise HTTPException(status_code=400, detail="messages is empty")
-    for m in req.messages:
-        if m.role not in ("user", "assistant"):
-            raise HTTPException(status_code=400, detail=f"invalid role: {m.role}")
+    history = trim_history([m.model_dump() for m in req.messages])
 
     def generate():
         try:
-            history = trim_history([m.model_dump() for m in req.messages])
             for event in ask_model(history):
                 yield sse(event)
-            yield sse({"type": "done"})
         except Exception as e:
-            # Full error details in the server terminal, short message to the page
             traceback.print_exc()
             yield sse({"type": "error", "message": str(e)})
 
-    return StreamingResponse(
-        generate(),
-        media_type="text/event-stream",
-        headers={"Cache-Control": "no-cache"},
-    )
+    return StreamingResponse(generate(), media_type="text/event-stream")
 
 
 if __name__ == "__main__":

@@ -1,27 +1,19 @@
 import os
 
-# Use the Windows certificate store (needed behind NetFree's SSL filtering)
 import truststore
-truststore.inject_into_ssl()
-
 from dotenv import load_dotenv
 from openai import OpenAI
 
+truststore.inject_into_ssl()
 load_dotenv()
-api_key = os.getenv("OPENAI_API_KEY") or os.getenv("API_KEY")
 
-client = OpenAI(api_key=api_key)
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 MODEL = "gpt-6-astra"
-INSTRUCTIONS = (
-    "You are a helpful assistant. Format your answers in Markdown: "
-    "use headings, **bold**, bullet lists, tables and code blocks where they help."
-)
+INSTRUCTIONS = "You are a helpful assistant. Format your answers in Markdown."
 
 
 def ask_model(messages: list[dict]):
-    """Stream the model's answer, yielding a "delta" event per text chunk
-    and a final "usage" event with the token counts."""
     stream = client.responses.create(
         model=MODEL,
         instructions=INSTRUCTIONS,

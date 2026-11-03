@@ -1,15 +1,13 @@
 import os
 
 import truststore
-truststore.inject_into_ssl()
-
 from dotenv import load_dotenv
 from openai import OpenAI
 
+truststore.inject_into_ssl()
 load_dotenv()
-api_key = os.getenv("OPENAI_API_KEY")
 
-client = OpenAI(api_key=api_key)
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 response = client.responses.create(
     model="gpt-6-astra",
@@ -18,8 +16,5 @@ response = client.responses.create(
 )
 
 print(response.output_text)
-print()
 print("input_tokens:", response.usage.input_tokens)
 print("output_tokens:", response.usage.output_tokens)
-#print(response.to_json())
-print("good by")
