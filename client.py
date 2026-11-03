@@ -9,7 +9,7 @@ load_dotenv()
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-MODEL = "gpt-6-astra"
+MODEL = "gpt-4.1-nano"
 INSTRUCTIONS = "You are a helpful assistant. Format your answers in Markdown."
 
 
